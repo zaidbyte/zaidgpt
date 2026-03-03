@@ -66,7 +66,7 @@ export default function LoginPage() {
             fontWeight: 700,
             letterSpacing: '-0.5px',
             margin: 0,
-          }}>ZaidGPT</h1>
+          }}>Z-GPT</h1>
           <p style={{ color: '#555', fontSize: 13, marginTop: 8 }}>Sign in to continue</p>
         </div>
 
@@ -81,7 +81,7 @@ export default function LoginPage() {
               value={userId}
               onChange={e => setUserId(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              placeholder="your-user-id"
+              placeholder="Enter User ID"
               style={{
                 width: '100%',
                 padding: '10px 14px',
