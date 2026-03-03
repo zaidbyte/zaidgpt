@@ -65,6 +65,7 @@ export default function Home() {
             Z-GPT
           </h1>
 
+          <div className="flex gap-3">
             {/* 🚨 Panic Button */}
             <button
               onClick={launchab}
