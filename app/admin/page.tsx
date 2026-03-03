@@ -3,8 +3,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
-type User = { id: string; user_id: string; created_at: string }
+type User = { id: string; user_id: string; created_at: string; expires_at: string | null }
 type Announcement = { id: string; message: string; active: boolean; created_at: string }
+
+function getExpiryStatus(expires_at: string | null): { label: string; color: string } {
+  if (!expires_at) return { label: 'Permanent', color: '#4ade80' }
+  const diff = new Date(expires_at).getTime() - Date.now()
+  if (diff <= 0) return { label: 'Expired', color: '#f87171' }
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const days = Math.floor(hours / 24)
+  if (days > 0) return { label: `${days}d left`, color: '#fbbf24' }
+  return { label: `${hours}h left`, color: '#fb923c' }
+}
 
 export default function AdminPage() {
   const router = useRouter()
@@ -14,6 +24,8 @@ export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([])
   const [newUserId, setNewUserId] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [userType, setUserType] = useState<'permanent' | 'temporary'>('permanent')
+  const [expiresIn, setExpiresIn] = useState('24')
   const [userError, setUserError] = useState('')
   const [userSuccess, setUserSuccess] = useState('')
   const [userLoading, setUserLoading] = useState(false)
@@ -47,16 +59,21 @@ export default function AdminPage() {
     setUserLoading(true)
     setUserError('')
     setUserSuccess('')
+
+    const body: any = { userId: newUserId.trim(), password: newPassword }
+    if (userType === 'temporary') body.expiresIn = parseInt(expiresIn)
+
     const res = await fetch('/api/admin/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: newUserId.trim(), password: newPassword }),
+      body: JSON.stringify(body),
     })
     const data = await res.json()
     if (!res.ok) {
       setUserError(data.error)
     } else {
-      setUserSuccess(`User "${newUserId.trim()}" created successfully.`)
+      const label = userType === 'temporary' ? ` (expires in ${expiresIn}h)` : ''
+      setUserSuccess(`User "${newUserId.trim()}" created${label}.`)
       setNewUserId('')
       setNewPassword('')
       fetchUsers()
@@ -124,16 +141,10 @@ export default function AdminPage() {
             <span style={s.logoTitle}>ZaidGPT</span>
           </div>
           <nav style={s.nav}>
-            <button
-              onClick={() => setTab('users')}
-              style={{ ...s.navBtn, ...(tab === 'users' ? s.navBtnActive : {}) }}
-            >
+            <button onClick={() => setTab('users')} style={{ ...s.navBtn, ...(tab === 'users' ? s.navBtnActive : {}) }}>
               <span style={s.navIcon}>👥</span> Users
             </button>
-            <button
-              onClick={() => setTab('announcements')}
-              style={{ ...s.navBtn, ...(tab === 'announcements' ? s.navBtnActive : {}) }}
-            >
+            <button onClick={() => setTab('announcements')} style={{ ...s.navBtn, ...(tab === 'announcements' ? s.navBtnActive : {}) }}>
               <span style={s.navIcon}>📢</span> Announcements
             </button>
           </nav>
@@ -146,11 +157,37 @@ export default function AdminPage() {
         {tab === 'users' && (
           <div>
             <h2 style={s.heading}>Users</h2>
-            <p style={s.subheading}>Create and manage user accounts.</p>
+            <p style={s.subheading}>Create permanent or temporary user accounts.</p>
 
             {/* Create user form */}
             <div style={s.card}>
               <h3 style={s.cardTitle}>Create New User</h3>
+
+              {/* User type toggle */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                {(['permanent', 'temporary'] as const).map(type => (
+                  <button
+                    key={type}
+                    onClick={() => setUserType(type)}
+                    style={{
+                      padding: '7px 18px',
+                      borderRadius: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: userType === type ? 'none' : '1px solid #1a1a2e',
+                      background: userType === type
+                        ? type === 'permanent' ? '#6366f1' : '#f59e0b'
+                        : 'transparent',
+                      color: userType === type ? '#fff' : '#555',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {type === 'permanent' ? '♾️ Permanent' : '⏳ Temporary'}
+                  </button>
+                ))}
+              </div>
+
               <div style={s.formRow}>
                 <div style={s.formGroup}>
                   <label style={s.label}>User ID</label>
@@ -160,7 +197,6 @@ export default function AdminPage() {
                     placeholder="e.g. john_doe"
                     value={newUserId}
                     onChange={e => setNewUserId(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && createUser()}
                   />
                 </div>
                 <div style={s.formGroup}>
@@ -171,17 +207,36 @@ export default function AdminPage() {
                     placeholder="Min. 6 characters"
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && createUser()}
                   />
                 </div>
+                {userType === 'temporary' && (
+                  <div style={s.formGroup}>
+                    <label style={s.label}>Access Duration</label>
+                    <select
+                      value={expiresIn}
+                      onChange={e => setExpiresIn(e.target.value)}
+                      style={{ ...s.input, cursor: 'pointer' }}
+                    >
+                      <option value="1">1 hour</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                      <option value="24">1 day</option>
+                      <option value="72">3 days</option>
+                      <option value="168">7 days</option>
+                      <option value="336">14 days</option>
+                      <option value="720">30 days</option>
+                    </select>
+                  </div>
+                )}
                 <button
-                  style={{ ...s.btn, ...s.btnPrimary, alignSelf: 'flex-end' }}
+                  style={{ ...s.btn, ...(userType === 'temporary' ? s.btnWarning : s.btnPrimary), alignSelf: 'flex-end' }}
                   onClick={createUser}
                   disabled={userLoading}
                 >
-                  {userLoading ? 'Creating...' : '+ Create User'}
+                  {userLoading ? 'Creating...' : `+ Create ${userType === 'temporary' ? 'Temp ' : ''}User`}
                 </button>
               </div>
+
               {userError && <p style={s.errorMsg}>{userError}</p>}
               {userSuccess && <p style={s.successMsg}>{userSuccess}</p>}
             </div>
@@ -197,24 +252,38 @@ export default function AdminPage() {
                     <tr>
                       <th style={s.th}>User ID</th>
                       <th style={s.th}>Created</th>
+                      <th style={s.th}>Access</th>
                       <th style={{ ...s.th, textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map(u => (
-                      <tr key={u.id} style={s.tr}>
-                        <td style={s.td}><span style={s.userIdChip}>{u.user_id}</span></td>
-                        <td style={s.td}>{new Date(u.created_at).toLocaleDateString()}</td>
-                        <td style={{ ...s.td, textAlign: 'right' }}>
-                          <button
-                            style={{ ...s.btn, ...s.btnDanger }}
-                            onClick={() => deleteUser(u.id, u.user_id)}
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {users.map(u => {
+                      const expiry = getExpiryStatus(u.expires_at)
+                      return (
+                        <tr key={u.id} style={s.tr}>
+                          <td style={s.td}><span style={s.userIdChip}>{u.user_id}</span></td>
+                          <td style={s.td}>{new Date(u.created_at).toLocaleDateString()}</td>
+                          <td style={s.td}>
+                            <span style={{
+                              fontSize: 11, fontWeight: 700, padding: '3px 8px',
+                              borderRadius: 4, letterSpacing: '0.05em',
+                              background: `${expiry.color}18`,
+                              color: expiry.color,
+                            }}>
+                              {expiry.label}
+                            </span>
+                          </td>
+                          <td style={{ ...s.td, textAlign: 'right' }}>
+                            <button
+                              style={{ ...s.btn, ...s.btnDanger }}
+                              onClick={() => deleteUser(u.id, u.user_id)}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               )}
@@ -262,16 +331,10 @@ export default function AdminPage() {
                         <span style={{ ...s.statusBadge, ...(a.active ? s.statusActive : s.statusInactive) }}>
                           {a.active ? 'Live' : 'Hidden'}
                         </span>
-                        <button
-                          style={{ ...s.btn, ...s.btnSecondary }}
-                          onClick={() => toggleAnnouncement(a.id, a.active)}
-                        >
+                        <button style={{ ...s.btn, ...s.btnSecondary }} onClick={() => toggleAnnouncement(a.id, a.active)}>
                           {a.active ? 'Hide' : 'Show'}
                         </button>
-                        <button
-                          style={{ ...s.btn, ...s.btnDanger }}
-                          onClick={() => deleteAnnouncement(a.id)}
-                        >
+                        <button style={{ ...s.btn, ...s.btnDanger }} onClick={() => deleteAnnouncement(a.id)}>
                           Delete
                         </button>
                       </div>
@@ -294,7 +357,7 @@ const styles: Record<string, React.CSSProperties> = {
   logoBadge: { fontSize: 9, letterSpacing: '0.15em', color: '#6366f1', fontWeight: 700 },
   logoTitle: { fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' },
   nav: { display: 'flex', flexDirection: 'column', gap: 4 },
-  navBtn: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'transparent', border: 'none', borderRadius: 6, color: '#555', fontSize: 14, cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'all 0.1s' },
+  navBtn: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'transparent', border: 'none', borderRadius: 6, color: '#555', fontSize: 14, cursor: 'pointer', textAlign: 'left', width: '100%' },
   navBtnActive: { background: 'rgba(99,102,241,0.12)', color: '#a5b4fc' },
   navIcon: { fontSize: 16 },
   logoutBtn: { background: 'transparent', border: '1px solid #1a1a2e', borderRadius: 6, color: '#555', fontSize: 13, padding: '8px 14px', cursor: 'pointer', textAlign: 'left' },
@@ -304,12 +367,13 @@ const styles: Record<string, React.CSSProperties> = {
   card: { background: '#0d0d10', border: '1px solid #1a1a2e', borderRadius: 8, padding: 24, marginBottom: 20 },
   cardTitle: { fontSize: 14, fontWeight: 700, color: '#888', letterSpacing: '0.05em', textTransform: 'uppercase', margin: '0 0 20px 0' },
   formRow: { display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' },
-  formGroup: { display: 'flex', flexDirection: 'column', gap: 8, flex: '1 1 180px' },
+  formGroup: { display: 'flex', flexDirection: 'column', gap: 8, flex: '1 1 160px' },
   label: { fontSize: 11, color: '#555', letterSpacing: '0.1em', textTransform: 'uppercase' },
   input: { padding: '10px 14px', background: '#07070a', border: '1px solid #1a1a2e', borderRadius: 6, color: '#fff', fontSize: 14, outline: 'none' },
   textarea: { width: '100%', padding: '10px 14px', background: '#07070a', border: '1px solid #1a1a2e', borderRadius: 6, color: '#fff', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' },
-  btn: { padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', transition: 'all 0.1s', whiteSpace: 'nowrap' },
+  btn: { padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', whiteSpace: 'nowrap' },
   btnPrimary: { background: '#6366f1', color: '#fff' },
+  btnWarning: { background: '#f59e0b', color: '#fff' },
   btnSecondary: { background: '#1a1a2e', color: '#888' },
   btnDanger: { background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' },
   errorMsg: { color: '#f87171', fontSize: 13, margin: '12px 0 0 0' },
