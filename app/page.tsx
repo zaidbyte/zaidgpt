@@ -62,30 +62,8 @@ export default function Home() {
       <div className={`${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} border-b-2 px-8 py-6 flex items-center justify-between`}>
         <div className="flex items-center gap-6">
           <h1 className={`text-4xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-            ZaidGPT
+            Z-GPT
           </h1>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => window.open("https://zaidsproxy.vercel.app", "_blank")}
-              className={`${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-900"} px-6 py-2 rounded-lg font-medium transition-colors`}
-            >
-              Zaid's Proxy
-            </button>
-
-            <button
-              onClick={() => window.open("https://zaidsproxy-v2.vercel.app", "_blank")}
-              className={`${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-900"} px-6 py-2 rounded-lg font-medium transition-colors`}
-            >
-              Zaid's Proxy v2
-            </button>
-
-            <button
-              onClick={() => window.open("https://classroom.google.com/c/NzA4NTQ0NzA3NTc5?cjc=5e644tru", "_blank")}
-              className={`${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-900"} px-6 py-2 rounded-lg font-medium transition-colors`}
-            >
-              Google Classroom
-            </button>
 
             {/* 🚨 Panic Button */}
             <button
@@ -115,7 +93,7 @@ export default function Home() {
               <div className="text-center space-y-4">
                 <div className="text-6xl">💬</div>
                 <p className={`${isDark ? "text-gray-400" : "text-gray-600"} text-2xl font-medium`}>
-                  Start a conversation with ZaidGPT
+                  Start a conversation with Z-GPT
                 </p>
                 <p className={`${isDark ? "text-gray-500" : "text-gray-500"} text-lg`}>
                   Ask me anything and I'll help you out!
@@ -138,7 +116,7 @@ export default function Home() {
                     }`}
                   >
                     <div className={`text-xs font-bold mb-2 uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                      {m.role === "user" ? "You" : "ZaidGPT"}
+                      {m.role === "user" ? "You" : "Z-GPT"}
                     </div>
                     <div className="text-lg leading-relaxed whitespace-pre-wrap break-words">
                       {m.content}
