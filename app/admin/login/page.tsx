@@ -11,8 +11,8 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false)
 
   async function handleLogin() {
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter your email and password.')
+    if (!userId.trim() || !password.trim()) {
+      setError('Please enter your User ID and password.')
       return
     }
 
@@ -77,14 +77,14 @@ export default function AdminLoginPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label style={{ display: 'block', color: '#555', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Email
+              User ID
             </label>
             <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              type="text"
+              value={userId}
+              onChange={e => setUserId(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              placeholder="admin@example.com"
+              placeholder="admin"
               style={{
                 width: '100%',
                 padding: '10px 14px',
