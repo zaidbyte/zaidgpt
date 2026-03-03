@@ -63,7 +63,7 @@ export default function LoginPage() {
               🔒 Your Privacy & Data
             </h2>
             <p style={{ color: '#555', fontSize: 13, margin: '0 0 24px 0' }}>
-              Here is exactly what ZaidGPT stores and how it is protected.
+              Here is exactly what Z-GPT stores and how it is protected.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
@@ -125,7 +125,7 @@ export default function LoginPage() {
       }}>
         <div style={{ marginBottom: 40, textAlign: 'center' }}>
           <h1 style={{ color: '#fff', fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', margin: 0 }}>
-            ZaidGPT
+            Z-GPT
           </h1>
           <p style={{ color: '#555', fontSize: 13, marginTop: 8 }}>Sign in to continue</p>
         </div>
