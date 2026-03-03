@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 
 type Message = {
   role: "user" | "assistant";
@@ -7,6 +9,7 @@ type Message = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isDark, setIsDark] = useState(true);
@@ -37,7 +40,7 @@ export default function Home() {
   // ---------- PANIC SCRIPT ----------
   const launchab = () => {
     const tab = window.open("about:blank", "_blank");
-    if (!tab) return; // popup blocked failsafe
+    if (!tab) return;
 
     const iframe = tab.document.createElement("iframe");
     const stl = iframe.style;
@@ -56,8 +59,18 @@ export default function Home() {
   };
   // ----------------------------------
 
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  };
+
   return (
     <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-white"} transition-colors duration-300`}>
+
+      {/* Announcements Banner */}
+      <AnnouncementBanner />
+
       {/* Header */}
       <div className={`${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} border-b-2 px-8 py-6 flex items-center justify-between`}>
         <div className="flex items-center gap-6">
@@ -76,13 +89,23 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Settings Button */}
-        <button
-          onClick={() => setIsDark(!isDark)}
-          className={`${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-900"} px-5 py-2 rounded-lg font-medium transition-colors flex items-center gap-2`}
-        >
-          {isDark ? "☀️ Light" : "🌙 Dark"}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className={`${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-900"} px-5 py-2 rounded-lg font-medium transition-colors flex items-center gap-2`}
+          >
+            {isDark ? "☀️ Light" : "🌙 Dark"}
+          </button>
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className={`${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-900"} px-5 py-2 rounded-lg font-medium transition-colors`}
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
 
       {/* Main Container */}
