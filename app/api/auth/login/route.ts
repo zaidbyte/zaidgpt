@@ -22,6 +22,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
+    // Check if user has expired
+    if (user.expires_at && new Date(user.expires_at) < new Date()) {
+      return NextResponse.json({ error: 'Your account has expired. Contact the administrator.' }, { status: 403 })
+    }
+
     // Verify password
     const valid = await bcrypt.compare(password, user.password_hash)
     if (!valid) {
@@ -30,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Create session token
     const token = randomBytes(32).toString('hex')
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
     await supabaseAdmin.from('sessions').insert({
       user_id: userId,
@@ -38,7 +43,6 @@ export async function POST(request: NextRequest) {
       expires_at: expiresAt.toISOString(),
     })
 
-    // Set cookie
     const response = NextResponse.json({ success: true })
     response.cookies.set('user_session', token, {
       httpOnly: true,
